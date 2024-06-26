@@ -39,9 +39,9 @@ def get_hh_vacancies(language, city_id):
     return all_vacancies, total_found
 
 
-def get_sj_vacancies(language, id):
+def get_sj_vacancies(language, sj_id):
     headers = {
-        "X-Api-App-Id": id,
+        "X-Api-App-Id": sj_id,
     }
     url = "https://api.superjob.ru/2.0/vacancies/"
     page = 0
@@ -67,38 +67,24 @@ def get_sj_vacancies(language, id):
     return all_vacancies, total_found
 
 
-def get_rub_salary(site, vacancy):
-    if site == "SuperJob":
-        payment_from = vacancy["payment_from"]
-        payment_to = vacancy["payment_to"]
-        currency = vacancy["currency"]
-    else:
-        salary = vacancy.get("salary")
-        if salary:
-            payment_from = salary["from"]
-            payment_to = salary["to"]
-            currency = salary["currency"]
-        else:
-            payment_from = None
-            payment_to = None
-            currency = None
-    predict_rub_salary = None
+def get_rub_salary(payment_from, payment_to, currency):
+    expected_rub_salary = None
     if currency == "rub" or currency == "RUR":
         if not payment_from and not payment_to:
-            predict_rub_salary = None
+            expected_rub_salary = None
         elif payment_from:
             if payment_to:
-                predict_rub_salary = (payment_to + payment_from) // 2
+                expected_rub_salary = (payment_to + payment_from) // 2
             else:
-                predict_rub_salary = payment_from * 1.2
+                expected_rub_salary = payment_from * 1.2
         elif payment_to:
-            predict_rub_salary = payment_to * 0.8
+            expected_rub_salary = payment_to * 0.8
     else:
-        predict_rub_salary = None
-    return predict_rub_salary
+        expected_rub_salary = None
+    return expected_rub_salary
 
 
-def get_vacancies_info(site, languages):
+def get_language_vacancies(site, languages):
     language_vacancies = {}
     for language in languages:
         language_vacancy = {}
@@ -108,14 +94,29 @@ def get_vacancies_info(site, languages):
             vacancies = get_sj_vacancies(language, sj_id)
         else:
             vacancies = get_hh_vacancies(language, 1)
-        count_language = vacancies[1]
-        for vacancy in vacancies[0]:
-            predict_rub_salary = get_rub_salary(site, vacancy)
-            if predict_rub_salary:
+        all_vacancies, count_language = vacancies
+        for vacancy in all_vacancies:
+            if site == "SuperJob":
+                payment_from = vacancy["payment_from"]
+                payment_to = vacancy["payment_to"]
+                currency = vacancy["currency"]
+                expected_rub_salary = get_rub_salary(payment_from, payment_to, currency)
+            else:
+                salary = vacancy.get("salary")
+                if salary:
+                    payment_from = salary["from"]
+                    payment_to = salary["to"]
+                    currency = salary["currency"]
+                else:
+                    payment_from = None
+                    payment_to = None
+                    currency = None
+                expected_rub_salary = get_rub_salary(payment_from, payment_to, currency)
+            if expected_rub_salary:
                 count_processed = count_processed + 1
-                salary_sum = salary_sum + predict_rub_salary
+                salary_sum = salary_sum + expected_rub_salary
         language_vacancy["vacancies_found"] = count_language
-        if count_processed > 0:
+        if count_processed:
             language_vacancy["vacancies_processed"] = count_processed
             language_vacancy["average_salary"] = salary_sum // count_processed
             language_vacancies[language] = language_vacancy
@@ -130,7 +131,7 @@ def make_vacancy_table(vacancies, site_name):
     for language, salary in vacancies.items():
         table.append([language, salary["vacancies_found"], salary["vacancies_processed"], salary["average_salary"]])
     table = AsciiTable(table, title=site_name).table
-    print(table)
+    return table
 
 
 if __name__ == "__main__":
@@ -151,5 +152,5 @@ if __name__ == "__main__":
         'HeadHunter'
     ]
     for site in sites:
-        vacancies = get_vacancies_info(site, languages)
-        make_vacancy_table(vacancies, site)
+        vacancies = get_language_vacancies(site, languages)
+        print(make_vacancy_table(vacancies, site))
