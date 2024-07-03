@@ -70,55 +70,57 @@ def get_sj_vacancies(language, sj_id):
 def get_rub_salary(payment_from, payment_to, currency):
     expected_rub_salary = None
     if currency == "rub" or currency == "RUR":
-        if not payment_from and not payment_to:
-            expected_rub_salary = None
+        if payment_from and payment_to:
+            expected_rub_salary = (payment_to + payment_from) // 2
         elif payment_from:
-            if payment_to:
-                expected_rub_salary = (payment_to + payment_from) // 2
-            else:
-                expected_rub_salary = payment_from * 1.2
+            expected_rub_salary = payment_from * 1.2
         elif payment_to:
             expected_rub_salary = payment_to * 0.8
-    else:
-        expected_rub_salary = None
     return expected_rub_salary
 
 
-def get_language_vacancies(site, languages):
+def process_vacancies(vacancies, site):
+    count_processed = 0
+    salary_sum = 0
+    language_vacancy = {}
+    all_vacancies, count_language = vacancies
+    for vacancy in all_vacancies:
+        if site == "SuperJob":
+            payment_from = vacancy["payment_from"]
+            payment_to = vacancy["payment_to"]
+            currency = vacancy["currency"]
+            expected_rub_salary = get_rub_salary(payment_from, payment_to, currency)
+        else:
+            salary = vacancy.get("salary")
+            if salary:
+                payment_from = salary["from"]
+                payment_to = salary["to"]
+                currency = salary["currency"]
+            else:
+                payment_from = None
+                payment_to = None
+                currency = None
+            expected_rub_salary = get_rub_salary(payment_from, payment_to, currency)
+        if expected_rub_salary:
+            count_processed = count_processed + 1
+            salary_sum = salary_sum + expected_rub_salary
+    language_vacancy["vacancies_found"] = count_language
+    language_vacancy["vacancies_processed"] = count_processed
+    language_vacancy["average_salary"] = None
+    if count_processed:
+        language_vacancy["average_salary"] = salary_sum // count_processed
+    return language_vacancy
+
+
+def get_language_vacancies(site, languages, sj_id):
     language_vacancies = {}
     for language in languages:
-        language_vacancy = {}
-        count_processed = 0
-        salary_sum = 0
         if site == "SuperJob":
             vacancies = get_sj_vacancies(language, sj_id)
         else:
             vacancies = get_hh_vacancies(language, 1)
-        all_vacancies, count_language = vacancies
-        for vacancy in all_vacancies:
-            if site == "SuperJob":
-                payment_from = vacancy["payment_from"]
-                payment_to = vacancy["payment_to"]
-                currency = vacancy["currency"]
-                expected_rub_salary = get_rub_salary(payment_from, payment_to, currency)
-            else:
-                salary = vacancy.get("salary")
-                if salary:
-                    payment_from = salary["from"]
-                    payment_to = salary["to"]
-                    currency = salary["currency"]
-                else:
-                    payment_from = None
-                    payment_to = None
-                    currency = None
-                expected_rub_salary = get_rub_salary(payment_from, payment_to, currency)
-            if expected_rub_salary:
-                count_processed = count_processed + 1
-                salary_sum = salary_sum + expected_rub_salary
-        language_vacancy["vacancies_found"] = count_language
-        if count_processed:
-            language_vacancy["vacancies_processed"] = count_processed
-            language_vacancy["average_salary"] = salary_sum // count_processed
+        language_vacancy = process_vacancies(vacancies, site)
+        if language_vacancy:
             language_vacancies[language] = language_vacancy
     return language_vacancies
 
@@ -152,5 +154,5 @@ if __name__ == "__main__":
         'HeadHunter'
     ]
     for site in sites:
-        vacancies = get_language_vacancies(site, languages)
+        vacancies = get_language_vacancies(site, languages, sj_id)
         print(make_vacancy_table(vacancies, site))
