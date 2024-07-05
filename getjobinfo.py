@@ -2,7 +2,7 @@ import requests
 from terminaltables import AsciiTable
 from dotenv import load_dotenv
 import os
-import pprint
+import argparse
 
 
 def get_hh_vacancies(language, city_id):
@@ -112,13 +112,13 @@ def process_vacancies(vacancies, site):
     return language_vacancy
 
 
-def get_language_vacancies(site, languages, sj_id):
+def get_language_vacancies(site, languages, search_id):
     language_vacancies = {}
     for language in languages:
         if site == "SuperJob":
-            vacancies = get_sj_vacancies(language, sj_id)
+            vacancies = get_sj_vacancies(language, search_id)
         else:
-            vacancies = get_hh_vacancies(language, 1)
+            vacancies = get_hh_vacancies(language, search_id)
         language_vacancy = process_vacancies(vacancies, site)
         if language_vacancy:
             language_vacancies[language] = language_vacancy
@@ -153,6 +153,12 @@ if __name__ == "__main__":
         'SuperJob',
         'HeadHunter'
     ]
+    parser = argparse.ArgumentParser(description='Process some id from sites.')
+    parser.add_argument('city_id', help='city id to search on the Headhunter')
     for site in sites:
-        vacancies = get_language_vacancies(site, languages, sj_id)
+        if site == "SuperJob":
+            search_id = sj_id
+        else:
+            search_id = parser.parse_args().city_id
+        vacancies = get_language_vacancies(site, languages, search_id)
         print(make_vacancy_table(vacancies, site))
