@@ -82,14 +82,12 @@ def get_rub_salary(payment_from, payment_to, currency):
 def process_vacancies(vacancies, site):
     processed_count = 0
     salary_sum = 0
-    language_statistic = {}
-    all_vacancies, language_count = vacancies
+    all_vacancies, total_vacancies = vacancies
     for vacancy in all_vacancies:
         if site == "SuperJob":
             payment_from = vacancy["payment_from"]
             payment_to = vacancy["payment_to"]
             currency = vacancy["currency"]
-            expected_rub_salary = get_rub_salary(payment_from, payment_to, currency)
         else:
             salary = vacancy.get("salary")
             if salary:
@@ -100,16 +98,15 @@ def process_vacancies(vacancies, site):
                 payment_from = None
                 payment_to = None
                 currency = None
-            expected_rub_salary = get_rub_salary(payment_from, payment_to, currency)
+        expected_rub_salary = get_rub_salary(payment_from, payment_to, currency)
         if expected_rub_salary:
-            processed_count = processed_count + 1
-            salary_sum = salary_sum + expected_rub_salary
-    language_statistic["vacancies_found"] = language_count
-    language_statistic["vacancies_processed"] = processed_count
-    language_statistic["average_salary"] = None
-    if processed_count:
-        language_statistic["average_salary"] = salary_sum // processed_count
-    return language_statistic
+            processed_count += processed_count
+            salary_sum += expected_rub_salary
+    return {
+        "vacancies_found": total_vacancies,
+        "vacancies_processed": processed_count,
+        "average_salary": salary_sum // processed_count if processed_count else None
+    }
 
 
 def get_language_vacancies(site, languages, search_id):
