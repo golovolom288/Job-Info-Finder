@@ -68,15 +68,15 @@ def get_sj_vacancies(language, sj_id):
 
 
 def get_rub_salary(payment_from, payment_to, currency):
-    expected_rub_salary = None
-    if currency == "rub" or currency == "RUR":
-        if payment_from and payment_to:
-            expected_rub_salary = (payment_to + payment_from) // 2
-        elif payment_from:
-            expected_rub_salary = payment_from * 1.2
-        elif payment_to:
-            expected_rub_salary = payment_to * 0.8
-    return expected_rub_salary
+    if currency not in ["rub", "RUR"]:
+        return None
+    if payment_from and payment_to:
+        return (payment_to + payment_from) // 2
+    if payment_from:
+        return payment_from * 1.2
+    if payment_to:
+        return payment_to * 0.8
+    return None
 
 
 def process_vacancies(vacancies, site):
