@@ -80,10 +80,10 @@ def get_rub_salary(payment_from, payment_to, currency):
 
 
 def process_vacancies(vacancies, site):
-    count_processed = 0
+    processed_count = 0
     salary_sum = 0
-    language_vacancy = {}
-    all_vacancies, count_language = vacancies
+    language_statistic = {}
+    all_vacancies, language_count = vacancies
     for vacancy in all_vacancies:
         if site == "SuperJob":
             payment_from = vacancy["payment_from"]
@@ -102,14 +102,14 @@ def process_vacancies(vacancies, site):
                 currency = None
             expected_rub_salary = get_rub_salary(payment_from, payment_to, currency)
         if expected_rub_salary:
-            count_processed = count_processed + 1
+            processed_count = processed_count + 1
             salary_sum = salary_sum + expected_rub_salary
-    language_vacancy["vacancies_found"] = count_language
-    language_vacancy["vacancies_processed"] = count_processed
-    language_vacancy["average_salary"] = None
-    if count_processed:
-        language_vacancy["average_salary"] = salary_sum // count_processed
-    return language_vacancy
+    language_statistic["vacancies_found"] = language_count
+    language_statistic["vacancies_processed"] = processed_count
+    language_statistic["average_salary"] = None
+    if processed_count:
+        language_statistic["average_salary"] = salary_sum // processed_count
+    return language_statistic
 
 
 def get_language_vacancies(site, languages, search_id):
@@ -119,9 +119,9 @@ def get_language_vacancies(site, languages, search_id):
             vacancies = get_sj_vacancies(language, search_id)
         else:
             vacancies = get_hh_vacancies(language, search_id)
-        language_vacancy = process_vacancies(vacancies, site)
-        if language_vacancy:
-            language_vacancies[language] = language_vacancy
+        language_statistic = process_vacancies(vacancies, site)
+        if language_statistic:
+            language_vacancies[language] = language_statistic
     return language_vacancies
 
 
@@ -138,7 +138,7 @@ def make_vacancy_table(vacancies, site_name):
 
 if __name__ == "__main__":
     load_dotenv()
-    sj_id = os.environ["SJ_ID_KEY"]
+    api_key = os.environ["SJ_ID_KEY"]
     languages = [
         'JavaScript',
         'Java',
@@ -149,16 +149,14 @@ if __name__ == "__main__":
         'CSS',
         'C#',
     ]
-    sites = [
-        'SuperJob',
-        'HeadHunter'
-    ]
+    site_functions = {
+        'SuperJob': (get_sj_vacancies, api_key),
+        'HeadHunter': (get_hh_vacancies, None)
+    }
     parser = argparse.ArgumentParser(description='Process some id from sites.')
     parser.add_argument('city_id', help='city id to search on the Headhunter')
-    for site in sites:
-        if site == "SuperJob":
-            search_id = sj_id
-        else:
-            search_id = parser.parse_args().city_id
+    args = parser.parse_args()
+    site_functions['HeadHunter'] = (site_functions['HeadHunter'][0], args.city_id)
+    for site, (vacancy_function, search_id) in site_functions.items():
         vacancies = get_language_vacancies(site, languages, search_id)
         print(make_vacancy_table(vacancies, site))
