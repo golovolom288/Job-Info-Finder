@@ -109,13 +109,13 @@ def process_vacancies(vacancies, site):
     }
 
 
-def get_language_vacancies(site, languages, search_id):
+def get_language_vacancies(site, languages, identifier):
     language_vacancies = {}
     for language in languages:
         if site == "SuperJob":
-            vacancies = get_sj_vacancies(language, search_id)
+            vacancies = get_sj_vacancies(language, identifier)
         else:
-            vacancies = get_hh_vacancies(language, search_id)
+            vacancies = get_hh_vacancies(language, identifier)
         language_statistic = process_vacancies(vacancies, site)
         if language_statistic:
             language_vacancies[language] = language_statistic
@@ -154,6 +154,6 @@ if __name__ == "__main__":
     parser.add_argument('city_id', help='city id to search on the Headhunter')
     args = parser.parse_args()
     site_functions['HeadHunter'] = (site_functions['HeadHunter'][0], args.city_id)
-    for site, (vacancy_function, search_id) in site_functions.items():
-        vacancies = get_language_vacancies(site, languages, search_id)
+    for site, (vacancy_function, identifier) in site_functions.items():
+        vacancies = get_language_vacancies(site, languages, identifier)
         print(make_vacancy_table(vacancies, site))
