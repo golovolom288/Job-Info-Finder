@@ -79,10 +79,9 @@ def get_rub_salary(payment_from, payment_to, currency):
     return None
 
 
-def process_vacancies_sj(vacancies):
+def process_vacancies_sj(all_vacancies, total_vacancies):
     processed_count = 0
     salary_sum = 0
-    all_vacancies, total_vacancies = vacancies
     for vacancy in all_vacancies:
         payment_from = vacancy["payment_from"]
         payment_to = vacancy["payment_to"]
@@ -98,13 +97,12 @@ def process_vacancies_sj(vacancies):
     }
 
 
-def process_vacancies_hh(vacancies):
+def process_vacancies_hh(all_vacancies, total_vacancies):
     payment_from = None
     payment_to = None
     currency = None
     processed_count = 0
     salary_sum = 0
-    all_vacancies, total_vacancies = vacancies
     for vacancy in all_vacancies:
         salary = vacancy.get("salary")
         if salary:
