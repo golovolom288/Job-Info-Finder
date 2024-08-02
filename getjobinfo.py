@@ -123,20 +123,16 @@ def process_vacancies_hh(all_vacancies, total_vacancies):
 def get_language_vacancies_hh(languages, identifier):
     language_vacancies = {}
     for language in languages:
-        vacancies = get_hh_vacancies(language, identifier)
-        language_statistic = process_vacancies_hh(vacancies)
-        if language_statistic:
-            language_vacancies[language] = language_statistic
+        all_vacancies, total_vacancies = get_hh_vacancies(language, identifier)
+        language_vacancies[language] = process_vacancies_hh(all_vacancies, total_vacancies)
     return language_vacancies
 
 
 def get_language_vacancies_sj(languages, identifier):
     language_vacancies = {}
     for language in languages:
-        vacancies = get_sj_vacancies(language, identifier)
-        language_statistic = process_vacancies_sj(vacancies)
-        if language_statistic:
-            language_vacancies[language] = language_statistic
+        all_vacancies, total_vacancies = get_sj_vacancies(language, identifier)
+        language_vacancies[language] = process_vacancies_sj(all_vacancies, total_vacancies)
     return language_vacancies
 
 
