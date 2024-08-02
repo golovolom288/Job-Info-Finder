@@ -28,13 +28,10 @@ def get_hh_vacancies(language, city_id):
         total_found = hh_result.get("found", 0)
         if not vacancies:
             break
-
         all_vacancies.extend(vacancies)
-        total_pages = int(hh_result.get('pages', 0))
-
+        total_pages = hh_result.get('pages', 0)
         if page >= total_pages - 1:
             break
-
         page += 1
     return all_vacancies, total_found
 
