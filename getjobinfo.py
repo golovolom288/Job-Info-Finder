@@ -169,12 +169,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Process some id from sites.')
     parser.add_argument('city_id', help='city id to search on the Headhunter')
     args = parser.parse_args()
-    sites = ["SuperJob", "HeadHunter"]
-    for site in sites:
-        if site == "SuperJob":
-            vacancies = get_language_vacancies_sj(languages, api_key)
-            print(make_vacancy_table(vacancies, site))
-        else:
-            vacancies = get_language_vacancies_hh(languages, args.city_id)
-            print(make_vacancy_table(vacancies, site))
+    vacancies = get_language_vacancies_sj(languages, api_key)
+    print(make_vacancy_table(vacancies, "SuperJob"))
+    vacancies = get_language_vacancies_hh(languages, args.city_id)
+    print(make_vacancy_table(vacancies, "HeadHunter"))
 
